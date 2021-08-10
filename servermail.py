@@ -47,18 +47,15 @@ def get_currency():
     #print(y)
     return currency
 
-print(get_currency())
-time.sleep(60)
 prev = list()
 prev.append(get_currency())
-
 print(prev)
+val = get_currency()
+email_alert('btc', str(val), 'george.adl@mail.ru')
 while True:
     val = get_currency()
     if val != prev[-1]:
         prev.append(val)
-        email_alert('btc', val, 'george.adl@mail.ru')
-    else:
-        continue
+        email_alert('btc', str(prev), 'george.adl@mail.ru')
     print(prev)
     time.sleep(60)
