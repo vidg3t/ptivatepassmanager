@@ -4,7 +4,6 @@ from datetime import datetime
 import smtplib
 from email.message import EmailMessage
 import time
-import schedule
 
 def email_alert(subject,body,to):
 	msg = EmailMessage()
@@ -67,8 +66,12 @@ def main():
 
 	email_alert('COVID', str(sm), 'george.adl@mail.ru')
 
-schedule.every().day.at("10:00").do(main)
 
 while True:
-	schedule.run_pending()
-	time.sleep(1)
+	cd = datetime.now()
+	ch = cd.hour
+	if ch == 12 or ch == 14 or ch == 11 or ch == 13:
+		main()
+	else:
+		print('not in time')
+	time.sleep(86400)
