@@ -107,9 +107,10 @@ def handle_txt(message):
         bot.send_message(message.chat.id,"Введите название компании, в которую хотите устроиться")
         bot.register_next_step_handler(message, work_selection)
     if message.text == '7':
-        o = list()
-        bot.send_message(message.chat.id,"Введите название своей компании")
-        bot.register_next_step_handler(message, show_requests)      
+        for i in sql.execute(f"SELECT requests FROM works WHERE ownerid={message.from_user.id}"):
+            bot.send_message(message.chat.id, i[0])
+        bot.send_message(message.chat.id, 'Выберите одного')
+        bot.register_next_step_handler(message, show_requests)
 
 def trade(message):
     db = sqlite3.connect("bank_data.db")
@@ -153,7 +154,7 @@ def reg_business(message):
     if len(y) == 2:
         for i in sql.execute(f"SELECT login FROM users WHERE telegramid = {message.from_user.id}"):
             owner = i[0]
-        sql.execute(f"INSERT INTO works VALUES(?,?,?,?,?,?,?)", (y[0], 0, int(y[1]), '', '', owner, message.from_user.id))
+        sql.execute(f"INSERT INTO works VALUES(?,?,?,?,?,?,?)", (y[0], 0, int(y[1]), 'None', '', owner, message.from_user.id))
         db.commit()
         sql.execute(f"UPDATE users SET status = 'b' WHERE telegramid = {message.from_user.id}")
         db.commit()
@@ -179,50 +180,56 @@ def work_selection(message):
                 continue
             else:
                 requests_list.append(i[0])
-                requests_list.append(',')
         
         requests_list.append(login)
-        requests_list.append(',')
-        requests_list = ''.join(requests_list)
+        requests_list = ','.join(requests_list)
         sql.execute(f"UPDATE works SET requests = '{requests_list}' WHERE work_name = '{y}'")
         db.commit()
         bot.send_message(message.chat.id, "Запрос отправлен!")
         bot.send_message(message.chat.id,"Введите 1 для перевода\nВведите 2 для просмотра баланса\nВведите 3 для просмотра своих данных\nВведите 4 для того чтобы открыть свой бизнесс\nВведите 5 для того чтобы посмотреть список доступных работ\nВведите 6 для того чтобы устроиться на работу\nВведите 7 для того чтобы увидеть заявки на вашу работу(для предпринимателей)")
         bot.register_next_step_handler(message, handle_txt)
 
-def show_requests(message):#TODO
+def show_requests(message):#todotodotodo(возможно до 200 строки стоит перенести вверх или тут регнекстхэндл попробовать сделать)
     db = sqlite3.connect("bank_data.db")
     sql = db.cursor()
-    y = message.text
-    sql.execute(f"SELECT owner FROM works WHERE work_name='{y}'")
-    if sql.fetchone() is None:
-        bot.send_message(message.chat.id, "Такого предприятия не существует")
-        bot.send_message(message.chat.id,"Введите 1 для перевода\nВведите 2 для просмотра баланса\nВведите 3 для просмотра своих данных\nВведите 4 для того чтобы открыть свой бизнесс\nВведите 5 для того чтобы посмотреть список доступных работ\nВведите 6 для того чтобы устроиться на работу\nВведите 7 для того чтобы увидеть заявки на вашу работу(для предпринимателей)")
-        bot.register_next_step_handler(message, handle_txt)
+    choosen = message.text
+    reql = list()
+    for i in sql.execute(f"SELECT requests FROM works WHERE ownerid={message.from_user.id}"):
+        reql = i[0]
+    reql = reql.split(',')
+    reql.remove(choosen)
+    if len(reql) == 1 or len(reql) == 0:
+        reql = ''.join(reql)
+        sql.execute(f"UPDATE works SET requests ='{reql}' WHERE ownerid = {message.from_user.id}")
+        db.commit()    
     else:
-        b = list()
-        c = 0
-        o = list()
-        for i in sql.execute(f"SELECT businesses FROM users WHERE telegramid={message.from_user.id}"):
-            b.append(i[0])
-        for m in range(len(b)):
-            if b[m] == y:
-                c = 1
-
-        if c == 1:
-            for x in sql.execute(f"SELECT requests FROM works WHERE ownerid={message.from_user.id}"):
-                if x[0] != '':
-                    o = x[0]
-            o = str(''.join(o))
-            o = o.split()
-            bot.send_message(message.chat.id, o)
-            bot.send_message(message.chat.id,'Из списка вышеперечисленных доступных работников выберите одного, и он попадет к вам!')
-            bot.register_next_step_handler(message, show_requests)
-        else:
-            bot.send_message(message.chat.id, 'Это предприятие не принадлежит вам!') 
-            bot.send_message(message.chat.id,"Введите 1 для перевода\nВведите 2 для просмотра баланса\nВведите 3 для просмотра своих данных\nВведите 4 для того чтобы открыть свой бизнесс\nВведите 5 для того чтобы посмотреть список доступных работ\nВведите 6 для того чтобы устроиться на работу\nВведите 7 для того чтобы увидеть заявки на вашу работу(для предпринимателей)")
-            bot.register_next_step_handler(message, handle_txt)
-
-
+        reql = ','.join(reql)
+        sql.execute(f"UPDATE works SET requests='{reql}' WHERE ownerid = {message.from_user.id}")
+        db.commit()
+    workl = list()
+    for n in sql.execute(f"SELECT workers_list FROM works WHERE ownerid = {message.from_user.id}"):
+        workl = n[0]
+    if workl == 'None':
+        sql.execute(f"UPDATE works SET workers_list = '{choosen}' WHERE ownerid = {message.from_user.id}")
+        db.commit()
+    else:
+        workl = workl.split(',')
+        workl.append(choosen)
+        workl = ','.join(workl)
+        sql.execute(f"UPDATE works SET workers_list = '{workl}' WHERE ownerid = {message.from_user.id}")
+        db.commit()
+    cw = 0
+    for k in sql.execute(f"SELECT current_workers FROM works WHERE ownerid = {message.from_user.id}"):
+        cw = k[0]
+    cw = int(cw)
+    cw += 1
+    sql.execute(f"UPDATE works SET current_workers = {cw} WHERE ownerid = {message.from_user.id}")
+    db.commit()
+    sql.execute(f"UPDATE users SET status = 'w' WHERE telegramid = {message.from_user.id}")
+    db.commit()
+    bot.send_message(message.chat.id, f'Успешно, теперь {choosen} работает у вас!')
+    bot.send_message(message.chat.id,"Введите 1 для перевода\nВведите 2 для просмотра баланса\nВведите 3 для просмотра своих данных\nВведите 4 для того чтобы открыть свой бизнесс\nВведите 5 для того чтобы посмотреть список доступных работ\nВведите 6 для того чтобы устроиться на работу\nВведите 7 для того чтобы увидеть заявки на вашу работу(для предпринимателей)")   
+    bot.register_next_step_handler(message, handle_txt)
+    
 
 bot.polling(none_stop=True, interval=0)
