@@ -77,7 +77,7 @@ def attach_file(msg, filepath):                             # Функция п�
 while True:
 	try:
 		addr_to = "pythonvidg3t@gmail.com"
-		pyAesCrypt.encryptFile('password_data.db', 'password_data.aes', 'Goshan223')                                # Получатель
+		pyAesCrypt.encryptFile('password_data.db', 'password_data.aes', 'mypassword')                                # Получатель
 		files = ["password_data.aes"]                      # Список файлов, если вложений нет, то files=[]                                      # Если нужно отправить все файлы из заданной папки, нужно указать её
 		send_email(addr_to, "pmBACKUP", "PasswordManager", files)
 		os.remove('password_data.aes')
