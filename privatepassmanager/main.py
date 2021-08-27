@@ -24,7 +24,7 @@ def check(message):
 	bot.send_message(message.chat.id,'Введите пароль')
 	bot.register_next_step_handler(message, start)
 def start(message):
-	if message.text == 'Goshan223':
+	if message.text == 'Your password':
 		bot.send_message(message.chat.id, 'Здарова, Георгий')
 		markup = types.InlineKeyboardMarkup(row_width=1)
 		global item,item2,item3,item4,item5
